@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS VISION // LIVE COMMAND HUD</title>
+    <title>JARVIS VISION // COMMAND HUD</title>
     <style>
         :root {
             --bg-base: #050811;
-            --bg-panel: rgba(13, 22, 41, 0.85);
+            --bg-panel: rgba(13, 22, 41, 0.88);
             --border-glow: rgba(0, 240, 255, 0.35);
             --cyan-core: #00F0FF;
             --cyan-dim: #0ea5e9;
@@ -20,57 +20,59 @@
 
         header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 28px; background: rgba(10, 16, 31, 0.95);
+            padding: 10px 24px; background: rgba(10, 16, 31, 0.95);
             border-bottom: 1px solid var(--border-glow); box-shadow: 0 0 25px rgba(0, 240, 255, 0.15);
+            flex-shrink: 0;
         }
-        .brand { font-size: 19px; font-weight: bold; letter-spacing: 3px; color: var(--cyan-core); text-shadow: 0 0 12px var(--cyan-core); }
-        .live-tag { background: #ef4444; color: #fff; font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 4px; letter-spacing: 1px; animation: blink 1.5s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .brand { font-size: 18px; font-weight: bold; letter-spacing: 3px; color: var(--cyan-core); text-shadow: 0 0 10px var(--cyan-core); }
+        .live-tag { background: #ef4444; color: #fff; font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 4px; letter-spacing: 1px; }
 
         .grid-container {
-            flex: 1; display: grid; grid-template-columns: 320px 1fr 440px; gap: 16px; padding: 16px; overflow: hidden;
+            flex: 1; display: grid; grid-template-columns: 310px 1fr 430px; gap: 14px; padding: 14px;
+            min-height: 0; overflow: hidden;
         }
 
         .panel {
             background: var(--bg-panel); border: 1px solid var(--border-glow); border-radius: 8px;
-            backdrop-filter: blur(12px); padding: 16px; display: flex; flex-direction: column;
-            box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.05);
+            backdrop-filter: blur(12px); padding: 14px; display: flex; flex-direction: column;
+            box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.05); min-height: 0;
         }
         .panel-title {
-            font-size: 12px; font-weight: bold; letter-spacing: 2px; color: var(--cyan-core);
-            text-transform: uppercase; margin-bottom: 12px; border-bottom: 1px solid rgba(0, 240, 255, 0.2); padding-bottom: 6px;
+            font-size: 11px; font-weight: bold; letter-spacing: 2px; color: var(--cyan-core);
+            text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid rgba(0, 240, 255, 0.2); padding-bottom: 4px;
+            flex-shrink: 0;
         }
 
         .metric-card {
             background: rgba(0, 0, 0, 0.45); border-left: 3px solid var(--cyan-core);
-            padding: 9px 12px; margin-bottom: 10px; border-radius: 4px;
+            padding: 8px 12px; margin-bottom: 8px; border-radius: 4px;
         }
         .metric-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; }
-        .metric-val { font-size: 15px; font-weight: bold; color: #fff; margin-top: 2px; }
+        .metric-val { font-size: 14px; font-weight: bold; color: #fff; margin-top: 2px; }
 
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
         button {
             background: rgba(0, 240, 255, 0.08); border: 1px solid var(--cyan-core); color: var(--cyan-core);
-            padding: 9px; font-weight: bold; letter-spacing: 1px; cursor: pointer; border-radius: 4px;
+            padding: 8px; font-weight: bold; letter-spacing: 1px; cursor: pointer; border-radius: 4px;
             transition: all 0.2s ease; font-size: 11px;
         }
-        button:hover { background: var(--cyan-core); color: #000; box-shadow: 0 0 15px var(--cyan-core); }
+        button:hover { background: var(--cyan-core); color: #000; box-shadow: 0 0 12px var(--cyan-core); }
 
-        /* Center Section */
-        .center-stage { display: flex; flex-direction: column; justify-content: space-between; }
+        /* CENTER STAGE & PERMANENT CHAT ANCHOR */
+        .center-stage { min-height: 0; }
         .reactor-box {
-            position: relative; width: 140px; height: 140px; margin: 5px auto;
-            display: flex; align-items: center; justify-content: center;
+            position: relative; width: 120px; height: 120px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .ring {
             position: absolute; border: 2px dashed var(--cyan-core); border-radius: 50%;
-            animation: spin 15s linear infinite; box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+            animation: spin 15s linear infinite; box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
         }
         .ring-1 { width: 100%; height: 100%; }
         .ring-2 { width: 75%; height: 75%; border: 1px solid var(--cyan-dim); animation: spin-rev 8s linear infinite; }
         .core {
             width: 45%; height: 45%; background: radial-gradient(circle, var(--cyan-core) 0%, rgba(0,240,255,0) 70%);
-            border-radius: 50%; box-shadow: 0 0 25px var(--cyan-core); animation: pulse 2s ease-in-out infinite;
+            border-radius: 50%; box-shadow: 0 0 20px var(--cyan-core); animation: pulse 2s ease-in-out infinite;
         }
 
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -78,41 +80,43 @@
         @keyframes pulse { 0%, 100% { transform: scale(0.9); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
 
         .terminal-log {
-            width: 100%; flex: 1; background: rgba(0, 0, 0, 0.65); border: 1px solid rgba(0, 240, 255, 0.25);
-            border-radius: 6px; padding: 14px; overflow-y: auto; font-size: 13px; line-height: 1.6; margin-top: 10px;
+            flex: 1 1 0; min-height: 0; background: rgba(0, 0, 0, 0.65); border: 1px solid rgba(0, 240, 255, 0.25);
+            border-radius: 6px; padding: 12px; overflow-y: auto; font-size: 13px; line-height: 1.5; margin: 10px 0;
         }
         .log-entry { margin-bottom: 7px; }
         .log-user { color: var(--cyan-core); }
         .log-jarvis { color: #A5F3FC; }
 
-        .chat-input-bar { width: 100%; display: flex; gap: 8px; margin-top: 10px; }
+        .chat-input-bar {
+            width: 100%; display: flex; gap: 8px; flex-shrink: 0;
+        }
         input[type="text"] {
-            flex: 1; background: rgba(0,0,0,0.6); border: 1px solid var(--border-glow); padding: 10px 14px;
+            flex: 1; background: rgba(0,0,0,0.6); border: 1px solid var(--border-glow); padding: 9px 12px;
             color: #fff; border-radius: 4px; outline: none; font-size: 13px;
         }
-        input[type="text"]:focus { border-color: var(--cyan-core); box-shadow: 0 0 10px var(--border-glow); }
+        input[type="text"]:focus { border-color: var(--cyan-core); box-shadow: 0 0 8px var(--border-glow); }
 
-        /* Right Video Viewport */
+        /* RIGHT VIDEO VIEWPORT */
         .video-viewport {
-            width: 100%; height: 260px; background: #000; border: 1px solid var(--border-glow);
+            width: 100%; height: 240px; background: #000; border: 1px solid var(--border-glow);
             border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center;
-            position: relative; margin-bottom: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            position: relative; margin-bottom: 10px; flex-shrink: 0;
         }
         .video-viewport img { width: 100%; height: 100%; object-fit: cover; }
         
         .analysis-box {
-            flex: 1; background: rgba(0,0,0,0.45); border-left: 3px solid var(--cyan-dim);
-            padding: 12px; border-radius: 4px; font-size: 12px; line-height: 1.5; color: #CBD5E1; overflow-y: auto;
+            flex: 1 1 0; min-height: 0; background: rgba(0,0,0,0.45); border-left: 3px solid var(--cyan-dim);
+            padding: 10px; border-radius: 4px; font-size: 12px; line-height: 1.5; color: #CBD5E1; overflow-y: auto;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="brand">◈ PROJECT JARVIS VISION // ULTRA HUD</div>
-        <div style="display:flex; align-items:center; gap: 15px;">
-            <span class="live-tag">LIVE FEED ACTIVE</span>
-            <div id="clock" style="color:var(--text-dim); font-size: 13px;">TIME: --:--:--</div>
+        <div class="brand">◈ PROJECT JARVIS VISION // OS-11</div>
+        <div style="display:flex; align-items:center; gap: 12px;">
+            <span class="live-tag">LIVE FEED</span>
+            <div id="clock" style="color:var(--text-dim); font-size: 12px;">TIME: --:--:--</div>
         </div>
     </header>
 
@@ -133,17 +137,17 @@
                 <div class="metric-val" id="tele-storage">-- GB</div>
             </div>
 
-            <div class="panel-title" style="margin-top: 10px;">OS Quick Controls</div>
+            <div class="panel-title" style="margin-top: 8px;">Hardware Controls</div>
             <div class="btn-group">
                 <button onclick="triggerAction('app', 'calc')">CALC</button>
                 <button onclick="triggerAction('app', 'notepad')">NOTEPAD</button>
                 <button onclick="triggerAction('volume', 35)">VOL 35%</button>
                 <button onclick="triggerAction('volume', 75)">VOL 75%</button>
             </div>
-            <button style="margin-top: 8px; width: 100%;" onclick="triggerAction('screenshot', '')">SILENT SCREENSHOT</button>
+            <button style="margin-top: 6px; width: 100%;" onclick="triggerAction('screenshot', '')">SILENT SCREENSHOT</button>
         </div>
 
-        <!-- CENTER: REACTOR & CHAT -->
+        <!-- CENTER: REACTOR & PERMANENT CHAT -->
         <div class="panel center-stage">
             <div class="reactor-box">
                 <div class="ring ring-1"></div>
@@ -152,32 +156,31 @@
             </div>
 
             <div class="terminal-log" id="logs">
-                <div class="log-entry log-jarvis">◈ JARVIS: High-speed conversational systems online. Ready for command, Sir.</div>
+                <div class="log-entry log-jarvis">◈ JARVIS: Systems operational on Windows 11. Chat and Vision unified, Sir.</div>
             </div>
 
             <div class="chat-input-bar">
-                <input type="text" id="userInput" placeholder="Ask JARVIS anything or issue a command..." onkeydown="if(event.key==='Enter') sendChat()">
+                <input type="text" id="userInput" placeholder="Ask anything, check camera, or issue a command..." onkeydown="if(event.key==='Enter') sendChat()">
                 <button onclick="sendChat()">TRANSMIT</button>
                 <button style="border-color: #f43f5e; color: #f43f5e;" onclick="triggerVoice()">🎙️ SPEAK (4s)</button>
             </div>
         </div>
 
-        <!-- RIGHT: LIVE GOPRO FEED -->
+        <!-- RIGHT: LIVE CAMERA -->
         <div class="panel">
-            <div class="panel-title">GoPro HERO9 Live Optical Stream (30 FPS)</div>
+            <div class="panel-title">Optical Feed (Live Stream)</div>
             <div class="video-viewport">
-                <!-- LIVE MJPEG STREAM FROM FLASK -->
-                <img src="/video_feed" alt="GoPro Live Feed" onerror="this.onerror=null; this.src=''; this.alt='Stream Initializing...';">
+                <img id="streamImg" src="/video_feed" alt="Optical Stream">
             </div>
 
-            <div style="display:flex; gap: 8px; margin-bottom: 10px;">
+            <div style="display:flex; gap: 6px; margin-bottom: 8px; flex-shrink: 0;">
                 <input type="text" id="customVisualPrompt" placeholder="Question about live view..." value="What objects do you observe?" style="flex:1;">
-                <button onclick="snapVision()" style="min-width: 140px;">◈ ANALYZE VIEW</button>
+                <button onclick="snapVision()" style="min-width: 120px;">◈ ANALYZE</button>
             </div>
             
-            <div class="panel-title">Multimodal Real-Time Cognition</div>
+            <div class="panel-title">Multimodal Analysis</div>
             <div class="analysis-box" id="visionAnalysis">
-                Live optical feed connected. Click 'ANALYZE VIEW' or ask any visual question about your room.
+                Live optical feed active. Click 'ANALYZE' or ask about your room in the chat.
             </div>
         </div>
     </div>
@@ -215,14 +218,14 @@
                 const data = await res.json();
                 appendLog("JARVIS", data.text + " (" + data.latency + "s)", "log-jarvis");
             } catch(e) {
-                appendLog("JARVIS", "Communication error.", "log-jarvis");
+                appendLog("JARVIS", "Communication delay occurred.", "log-jarvis");
             }
         }
 
         async function snapVision() {
             const promptVal = document.getElementById('customVisualPrompt').value || "Describe what you see.";
             const box = document.getElementById('visionAnalysis');
-            box.innerText = "Analyzing live 30 FPS buffer in memory...";
+            box.innerText = "Analyzing live optical buffer in memory...";
             try {
                 const res = await fetch('/api/vision/snap', {
                     method: 'POST',
@@ -230,7 +233,7 @@
                     body: JSON.stringify({prompt: promptVal})
                 });
                 const data = await res.json();
-                box.innerText = data.text + " (Latency: " + data.latency + "s)";
+                box.innerText = data.text + " (" + data.latency + "s)";
                 appendLog("VISION", data.text + " (" + data.latency + "s)", "log-jarvis");
             } catch(e) {
                 box.innerText = "Optical analysis failed.";
