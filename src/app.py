@@ -1,4 +1,5 @@
 ﻿import os
+import time
 import threading
 from flask import Flask, render_template, jsonify, request, Response
 from brain import JarvisBrain
@@ -41,22 +42,28 @@ def index():
 def video_feed():
     return Response(generate_video_stream(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
+@app.route("/api/camera/switch", methods=["POST"])
+def switch_camera():
+    data = request.json or {}
+    idx = int(data.get("index", 0))
+    vision.streamer.switch_camera(idx)
+    return jsonify({"status": "success", "active_index": idx})
+
 @app.route("/api/status", methods=["GET"])
 def get_status():
     return jsonify(ctrl.get_system_status())
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
-    """Agentic chat route: interprets commands and calls actual tools."""
     data = request.json or {}
     prompt = data.get("prompt", "")
     if not prompt:
         return jsonify({"error": "Empty prompt"}), 400
 
     system_instruction = (
-        "You are JARVIS on Windows 11. If the user asks about the room, objects, or camera, "
+        "You are JARVIS on Windows 11. If the user asks what you see, or about their room/objects, "
         "call look_through_camera. If they ask for system info, volume, screenshot, or apps, "
-        "call the matching tool. Otherwise answer concisely as Sir."
+        "call the matching tool. Address user politely as Sir in one concise sentence."
     )
 
     t0 = time.time()
@@ -73,7 +80,7 @@ def chat():
             args = call.args or {}
             
             if name == "look_through_camera":
-                result = vision.see_and_reason("Describe what you observe right now in 1 concise sentence.")["text"]
+                result = vision.see_and_reason("Describe what you observe through the live feed in 1-2 concise sentences.")["text"]
             elif name == "get_system_telemetry":
                 s = ctrl.get_system_status()
                 result = f"Battery: {s['battery']}, Free SSD: {s['free_storage_gb']}, RAM: {s['ram_used_percent']}"
@@ -88,7 +95,7 @@ def chat():
 
             followup = brain.client.models.generate_content(
                 model=brain.model_name,
-                contents=[system_instruction, f"Tool execution result: {result}. Report to user in one crisp sentence as Sir."]
+                contents=[system_instruction, f"Tool result: {result}. Report this to user as Sir in 1 concise sentence."]
             )
             reply = followup.text.strip()
         else:
@@ -99,6 +106,7 @@ def chat():
         return jsonify({"text": reply, "latency": latency})
 
     except Exception as e:
+        print(f"[ERROR in chat]: {e}")
         return jsonify({"text": "I encountered an execution delay, Sir.", "latency": 0.0})
 
 @app.route("/api/vision/snap", methods=["POST"])
