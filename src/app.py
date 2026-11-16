@@ -13,7 +13,11 @@ app = Flask(__name__, template_folder="../templates", static_folder="../static")
 brain = JarvisBrain()
 voice = JarvisVoice()
 ctrl = WindowsController()
-vision = JarvisVision(camera_index=1)
+# Default to index 2 (GoPro) or 0 (Laptop)
+vision = JarvisVision(camera_index=2)
+
+# Persistent Multi-Turn Conversation History
+conversation_history = []
 
 tools_definition = [
     {"name": "get_system_telemetry", "description": "Reads battery, free storage, RAM, and time."},
@@ -32,7 +36,7 @@ def generate_video_stream():
         if frame_bytes is not None:
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-        threading.Event().wait(0.04)
+        threading.Event().wait(0.033)
 
 @app.route("/")
 def index():
@@ -55,22 +59,29 @@ def get_status():
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
+    """Agentic chat route with persistent multi-turn memory."""
+    global conversation_history
     data = request.json or {}
     prompt = data.get("prompt", "")
     if not prompt:
         return jsonify({"error": "Empty prompt"}), 400
 
     system_instruction = (
-        "You are JARVIS on Windows 11. If the user asks what you see, or about their room/objects, "
-        "call look_through_camera. If they ask for system info, volume, screenshot, or apps, "
-        "call the matching tool. Address user politely as Sir in one concise sentence."
+        "You are JARVIS on Windows 11. Maintain continuous conversational memory with the user. "
+        "If the user asks about the room, objects, or camera, call look_through_camera. "
+        "If they ask for system info, volume, screenshot, or apps, call the matching tool. "
+        "Address user politely as Sir in one concise, intelligent sentence."
     )
 
     t0 = time.time()
     try:
+        # Append user turn to persistent memory
+        conversation_history.append(f"USER: {prompt}")
+        recent_context = "\n".join(conversation_history[-10:])
+
         response = brain.client.models.generate_content(
             model=brain.model_name,
-            contents=[system_instruction, prompt],
+            contents=[system_instruction, f"Conversation context:\n{recent_context}"],
             config=types.GenerateContentConfig(tools=[{"function_declarations": tools_definition}])
         )
 
@@ -95,19 +106,21 @@ def chat():
 
             followup = brain.client.models.generate_content(
                 model=brain.model_name,
-                contents=[system_instruction, f"Tool result: {result}. Report this to user as Sir in 1 concise sentence."]
+                contents=[system_instruction, f"Tool execution result: {result}. Formulate final response to user as Sir in 1 concise sentence."]
             )
             reply = followup.text.strip()
         else:
             reply = response.text.strip()
 
+        # Append assistant turn to persistent memory
+        conversation_history.append(f"JARVIS: {reply}")
         latency = round(time.time() - t0, 2)
         speak_async(reply)
         return jsonify({"text": reply, "latency": latency})
 
     except Exception as e:
         print(f"[ERROR in chat]: {e}")
-        return jsonify({"text": "I encountered an execution delay, Sir.", "latency": 0.0})
+        return jsonify({"text": "I encountered a minor cognitive delay, Sir.", "latency": 0.0})
 
 @app.route("/api/vision/snap", methods=["POST"])
 def vision_snap():

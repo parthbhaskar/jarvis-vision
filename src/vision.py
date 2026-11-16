@@ -7,9 +7,9 @@ from PIL import Image
 from brain import JarvisBrain
 
 class CameraStreamer:
-    """Threaded camera grabber supporting GoPro and Laptop Webcam with HUD graphic."""
+    """1080p Full HD continuous frame streamer with multi-camera scanning."""
 
-    def __init__(self, camera_index=1):
+    def __init__(self, camera_index=2):
         self.camera_index = camera_index
         self.current_frame = None
         self.is_running = True
@@ -24,26 +24,22 @@ class CameraStreamer:
             if self.cap and self.cap.isOpened():
                 self.cap.release()
             self.cap = None
-            print(f"[VISION] Switched camera to index {new_index}")
+            print(f"[VISION] Active camera switched to index {new_index}")
 
     def _open_camera(self):
-        # Index 1 (GoPro) prefers 1080p; Index 0 (Laptop) uses default
         cap = cv2.VideoCapture(self.camera_index, cv2.CAP_DSHOW)
-        if self.camera_index == 1:
-            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        # Enforce 1080p Full HD
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         return cap
 
     def _generate_standby_frame(self):
-        """Generates a cinematic HUD graphic when the camera sensor is warming up."""
-        img = np.zeros((480, 640, 3), dtype=np.uint8)
-        # Deep navy background
+        img = np.zeros((720, 1280, 3), dtype=np.uint8)
         img[:] = (17, 8, 5)
-        # Grid lines
-        cv2.rectangle(img, (20, 20), (620, 460), (255, 240, 0), 1)
-        cv2.putText(img, "JARVIS OPTICAL SENSOR // STANDBY", (120, 220), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 240, 0), 2)
-        cv2.putText(img, f"Active Index: {self.camera_index} (Click 'SWITCH CAMERA' to toggle)", (100, 260), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (180, 180, 180), 1)
-        cv2.putText(img, f"System Clock: {time.strftime('%H:%M:%S')}", (220, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 165, 255), 1)
+        cv2.rectangle(img, (30, 30), (1250, 690), (255, 240, 0), 2)
+        cv2.putText(img, "JARVIS 1080p OPTICAL FEED // STANDBY", (320, 330), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 240, 0), 2)
+        cv2.putText(img, f"Active Camera Index: {self.camera_index}", (440, 380), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (180, 180, 180), 2)
+        cv2.putText(img, "Select camera from dropdown above if feed is dark", (360, 430), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 1)
         return img
 
     def _capture_worker(self):
@@ -58,7 +54,6 @@ class CameraStreamer:
                     with self.lock:
                         self.current_frame = frame
                 else:
-                    # If frame is pure black, feed the standby HUD graphic
                     with self.lock:
                         self.current_frame = self._generate_standby_frame()
                     time.sleep(0.04)
@@ -75,13 +70,14 @@ class CameraStreamer:
 
     def get_jpeg_bytes(self):
         frame = self.get_latest_frame()
-        ret, buf = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 75])
+        # Encode at high quality (85%)
+        ret, buf = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
         if ret:
             return buf.tobytes()
         return None
 
 class JarvisVision:
-    def __init__(self, camera_index=1):
+    def __init__(self, camera_index=2):
         self.brain = JarvisBrain()
         self.streamer = CameraStreamer(camera_index=camera_index)
 
